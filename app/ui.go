@@ -1,8 +1,8 @@
-package simple
+package app
 
 import (
-	"fmt"
 	"log"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -17,21 +17,25 @@ func RunApp() {
 	myApp := app.New()
 	myWindow := myApp.NewWindow("Получение билетов")
 
-	// Поле для ввода номера
-	entry := widget.NewEntry()
-	entry.SetPlaceHolder("Введите ваш номер")
+	// Создаём новый компонент поля ввода
+	inputField := NewInputField("Введите ваш номер")
 
 	// Лейбл для отображения результата
 	responseLabel := widget.NewLabel("")
 
 	// Пустое изображение для QR-кода
 	qrImage := canvas.NewImageFromImage(nil)
-	qrImage.FillMode = canvas.ImageFillContain
+	qrImage.FillMode = canvas.ImageFillOriginal
+
+	var countdownTimer *time.Timer // Переменная для хранения таймера
 
 	// Функция для генерации QR-кода на основе UUID пользователя и отправки данных на сервер
-	generateQR := func(number string) {
+	generateQR := func() {
+		number := inputField.GetText()
 		if number == "" {
 			responseLabel.SetText("Пожалуйста, введите корректный номер.")
+			qrImage.Image = nil
+			qrImage.Refresh()
 			return
 		}
 
@@ -43,45 +47,63 @@ func RunApp() {
 		} else {
 			if statusCode == 404 {
 				responseLabel.SetText("Пользователь не найден")
+				qrImage.Image = nil // Очищаем изображение при неудаче
+				qrImage.Refresh()
 			} else {
-				responseText := fmt.Sprintf("Пользователь найден:\nID: %d\nИмя: %s\nUUID: %s", response.Data.ID, response.Data.Name, response.Data.UUID)
-				responseLabel.SetText(responseText)
+				responseLabel.SetText("Пользователь найден")
 
 				// Генерация QR-кода на основе UUID
 				img, err := generateQRCode(response.Data.UUID)
 				if err != nil {
+					qrImage.Image = nil
+					qrImage.Refresh()
 					responseLabel.SetText("Ошибка при генерации QR-кода.")
 					return
 				}
 
 				// Обновление изображения QR-кода
 				qrImage.Image = img
-				qrImage.Refresh()
+				qrImage.Refresh() // Обязательно обновляем изображение
+
+				// Если таймер уже запущен, останавливаем его
+				if countdownTimer != nil {
+					countdownTimer.Stop()
+				}
+
+				// Запускаем новый обратный отсчет
+				countdownTimer = time.AfterFunc(10*time.Second, func() {
+					resetUI(inputField, responseLabel, qrImage)
+				})
 			}
 		}
 	}
 
 	// Кнопка для генерации QR-кода и отправки данных
 	generateButton := widget.NewButton("Отправить", func() {
-		generateQR(entry.Text)
+		generateQR()
 	})
 
 	// Собираем интерфейс
 	content := container.NewVBox(
-		entry,
-		generateButton,
 		qrImage,
-		responseLabel,
+		container.NewCenter(responseLabel),
+		inputField.Entry,
+		generateButton,
 	)
 
-	// Центрирование содержимого
-	centeredContent := container.NewCenter(content)
-
 	// Устанавливаем контент окна
-	myWindow.SetContent(centeredContent)
+	myWindow.SetContent(content)
 
 	// Устанавливаем размеры окна
-	myWindow.Resize(fyne.NewSize(400, 400))
+	myWindow.Resize(fyne.NewSize(300, 300))
 	myWindow.CenterOnScreen()
 	myWindow.ShowAndRun()
+}
+
+// Функция для сброса UI к начальному состоянию
+func resetUI(inputField *InputField, responseLabel *widget.Label, qrImage *canvas.Image) {
+	inputField.Entry.SetText("") // Сбрасываем текст в поле ввода
+	responseLabel.SetText("")    // Очищаем текст результата
+	qrImage.Image = nil          // Очищаем изображение QR-кода
+	qrImage.Refresh()            // Обновляем изображение
 }

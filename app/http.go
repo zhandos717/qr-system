@@ -1,4 +1,4 @@
-package simple
+package app
 
 import (
 	"bytes"

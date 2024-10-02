@@ -1,13 +1,13 @@
 package main
 
 import (
-	"github.com/zhandos717/qr-system/simple"
+	 "github.com/zhandos717/qr-system/app"
 )
 
 func main() {
 	// Загрузка переменных окружения
-	simple.LoadEnv()
+	app.LoadEnv()
 
 	// Запуск приложения
-	simple.RunApp()
+	app.RunApp()
 }
