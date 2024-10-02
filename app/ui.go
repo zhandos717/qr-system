@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"log"
 	"time"
 
@@ -34,6 +33,7 @@ func RunApp() {
 	generateQR := func() {
 		number := inputField.GetText()
 		if number == "" {
+			responseLabel.Importance = widget.DangerImportance
 			responseLabel.SetText("Пожалуйста, введите корректный номер.")
 			qrImage.Image = nil
 			qrImage.Refresh()
@@ -48,11 +48,16 @@ func RunApp() {
 		} else {
 			if statusCode == 404 {
 				responseLabel.SetText("Пользователь не найден")
+
+				responseLabel.Importance = widget.DangerImportance
+
 				qrImage.Image = nil // Очищаем изображение при неудаче
 				qrImage.Refresh()
 			} else {
-				responseText := fmt.Sprintf("Пользователь найден:\nID: %d\nИмя: %s\nUUID: %s", response.Data.ID, response.Data.Name, response.Data.UUID)
-				responseLabel.SetText(responseText)
+
+				responseLabel.Importance = widget.SuccessImportance
+
+				responseLabel.SetText("Пользователь найден")
 
 				// Генерация QR-кода на основе UUID
 				img, err := generateQRCode(response.Data.UUID)
