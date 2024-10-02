@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -50,7 +51,8 @@ func RunApp() {
 				qrImage.Image = nil // Очищаем изображение при неудаче
 				qrImage.Refresh()
 			} else {
-				responseLabel.SetText("Пользователь найден")
+				responseText := fmt.Sprintf("Пользователь найден:\nID: %d\nИмя: %s\nUUID: %s", response.Data.ID, response.Data.Name, response.Data.UUID)
+				responseLabel.SetText(responseText)
 
 				// Генерация QR-кода на основе UUID
 				img, err := generateQRCode(response.Data.UUID)
@@ -83,12 +85,25 @@ func RunApp() {
 		generateQR()
 	})
 
+	// Настройка размера кнопки
+	generateButton.Resize(fyne.NewSize(200, 100))     // Ширина 200 пикселей, высота 50 пикселей
+	generateButton.Importance = widget.HighImportance // Устанавливаем кнопку как важную
+
+	// Добавление цветового фона для кнопки
+	//	generateButton.Style.BackgroundColor = fyne.NewColor(0, 0, 255) // Синий цвет
+	//	generateButton.Style.Color = fyne.NewColor(255, 255, 255)       // Белый цвет текста
+
+	bottomContainer := container.NewVBox(
+		inputField.Entry,
+		generateButton,
+	)
+
 	// Собираем интерфейс
 	content := container.NewVBox(
 		qrImage,
 		container.NewCenter(responseLabel),
-		inputField.Entry,
-		generateButton,
+
+		bottomContainer,
 	)
 
 	// Устанавливаем контент окна
