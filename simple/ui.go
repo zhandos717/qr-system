@@ -1,7 +1,8 @@
-package main
+package simple
 
 import (
 	"fmt"
+	"log"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -11,7 +12,7 @@ import (
 )
 
 // Функция для запуска приложения с UI
-func runApp() {
+func RunApp() {
 	// Создание приложения
 	myApp := app.New()
 	myWindow := myApp.NewWindow("Получение билетов")
@@ -27,38 +28,42 @@ func runApp() {
 	qrImage := canvas.NewImageFromImage(nil)
 	qrImage.FillMode = canvas.ImageFillContain
 
-	// Кнопка для отправки данных и генерации QR-кода
-	generateButton := widget.NewButton("Отправить", func() {
-		number := entry.Text
+	// Функция для генерации QR-кода на основе UUID пользователя и отправки данных на сервер
+	generateQR := func(number string) {
 		if number == "" {
 			responseLabel.SetText("Пожалуйста, введите корректный номер.")
 			return
 		}
 
-		// Отправка данных на сервер
+		// Отправка данных на сервер и обработка ответа
 		response, statusCode, err := sendDataToServer(number)
 		if err != nil {
 			responseLabel.SetText("Ошибка при отправке данных на сервер.")
-			return
-		}
-
-		if statusCode == 404 {
-			responseLabel.SetText("Пользователь не найден")
+			log.Println(err)
 		} else {
-			responseText := fmt.Sprintf("Пользователь найден:\nID: %d\nИмя: %s\nUUID: %s", response.Data.ID, response.Data.Name, response.Data.UUID)
-			responseLabel.SetText(responseText)
+			if statusCode == 404 {
+				responseLabel.SetText("Пользователь не найден")
+			} else {
+				responseText := fmt.Sprintf("Пользователь найден:\nID: %d\nИмя: %s\nUUID: %s", response.Data.ID, response.Data.Name, response.Data.UUID)
+				responseLabel.SetText(responseText)
 
-			// Генерация QR-кода
-			img, err := generateQRCode(response.Data.UUID)
-			if err != nil {
-				responseLabel.SetText("Ошибка при генерации QR-кода.")
-				return
+				// Генерация QR-кода на основе UUID
+				img, err := generateQRCode(response.Data.UUID)
+				if err != nil {
+					responseLabel.SetText("Ошибка при генерации QR-кода.")
+					return
+				}
+
+				// Обновление изображения QR-кода
+				qrImage.Image = img
+				qrImage.Refresh()
 			}
-
-			// Обновление изображения QR-кода
-			qrImage.Image = img
-			qrImage.Refresh()
 		}
+	}
+
+	// Кнопка для генерации QR-кода и отправки данных
+	generateButton := widget.NewButton("Отправить", func() {
+		generateQR(entry.Text)
 	})
 
 	// Собираем интерфейс
