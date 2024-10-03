@@ -47,10 +47,8 @@ func RunApp() {
 			log.Println(err)
 		} else {
 			if statusCode == 404 {
-				responseLabel.SetText("Пользователь не найден")
-
 				responseLabel.Importance = widget.DangerImportance
-
+				responseLabel.SetText("Пользователь не найден")
 				qrImage.Image = nil // Очищаем изображение при неудаче
 				qrImage.Refresh()
 			} else {
@@ -99,6 +97,7 @@ func RunApp() {
 	//	generateButton.Style.Color = fyne.NewColor(255, 255, 255)       // Белый цвет текста
 
 	bottomContainer := container.NewVBox(
+
 		inputField.Entry,
 		generateButton,
 	)
@@ -107,7 +106,6 @@ func RunApp() {
 	content := container.NewVBox(
 		qrImage,
 		container.NewCenter(responseLabel),
-
 		bottomContainer,
 	)
 
@@ -115,7 +113,7 @@ func RunApp() {
 	myWindow.SetContent(content)
 
 	// Устанавливаем размеры окна
-	myWindow.Resize(fyne.NewSize(300, 300))
+	myWindow.Resize(fyne.NewSize(400, 400))
 	myWindow.CenterOnScreen()
 	myWindow.ShowAndRun()
 }
